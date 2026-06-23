@@ -1,0 +1,60 @@
+%% Load correpondences data
+
+clear all; close all; clc;
+load("correspondences.mat");
+
+
+%% Execute registration
+
+folder_out = "C:\Users\olocc\OneDrive\Desktop\Thesis_new\Dataset\" + ...
+    "Lepard_nr_icp_results\";
+times = {};
+
+for i = 1 : size(correspondences, 1)
+    % Load source clouds
+    num_pred = correspondences{i , 2};
+    filename_src = "C:\Users\olocc\OneDrive\Desktop\Thesis_new\LepardTests\" + ...
+        "2711_med_res\prediction_" + num_pred + ".ply";
+    src = pcread(filename_src);
+    Source.faces = [];
+    Source.vertices = src.Location;
+    Source.normals = src.Normal;
+    
+    % Load target clouds
+    tgt_label = correspondences{i , 1};
+    filename_tgt = "C:\Users\olocc\OneDrive\Desktop\Thesis_new\Dataset\" + ...
+        "Clouds_for_lepard\Model27\" + tgt_label + ".ply";
+    tgt = pcread(filename_tgt);
+    Target.faces = [];
+    Target.vertices = tgt.Location;
+    Target.normals = tgt.Normal;
+    
+    % Specify that surface normals are available and can be used.
+    Options.useNormals = 1;
+    
+    % Specify that the source deformations should be plotted.
+    Options.plot = 0;
+    
+    % Specify that the landmarks term are available and can be used.
+    Options.landmarks = 0;
+    
+    % Selected landmarks
+    ls_source = [];
+    ls_target = [];
+    
+    % Perform non-rigid ICP
+    start = tic;
+    [src_def_pts, X] = nricp_landmarks(Source, Target, Options, ls_source, ls_target);
+    reg_time = toc(start);
+    
+    % Save transformed points into a mat file
+    % filename_out = folder_out + tgt_label;
+    % save(filename_out, "src_def_pts")
+
+    % Save registration time
+    times{i, 1} = "prediction_" + num_pred;
+    times{i, 2} = reg_time;
+end
+
+filename_out = folder_out + "times";
+save(filename_out, "times")
